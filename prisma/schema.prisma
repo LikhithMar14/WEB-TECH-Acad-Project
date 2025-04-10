@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum cartItems {
+  Jeans
+  Other
+  Shirt
+  BedSheet
+  Towel
+  Tshirt
+  TrackPants
+}
+
+enum OrderStatus {
+  OrderNotInitiated
+  OrderPlaced
+  OrderDelivered
+}
+
+enum LaundryName {
+  Krishna_Tower_Basement
+  Vedhavathi_Tower_Basement
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  admissionNo   String    @unique
+  name          String
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  year          Int?
+  washes        Int       @default(40)
+  isSubscribed  Boolean   @default(false)
+  carts         Cart[]
+  orders        Order[]
+  accounts      Account[]
+  sessions      Session[]
+}
+
+model Cart {
+  id     Int        @id @default(autoincrement())
+  userId Int        @unique
+  user   User       @relation(fields: [userId], references: [id])
+  items  CartItem[]
+  order  Order?
+}
+
+model CartItem {
+  id       Int       @id @default(autoincrement())
+  cartId   Int
+  cart     Cart      @relation(fields: [cartId], references: [id])
+  item     cartItems
+  weight   Decimal
+  quantity Int       @default(1)
+}
+
+model Order {
+  id          Int         @id @default(autoincrement())
+  userId      Int
+  cartId      Int         @unique
+  user        User        @relation(fields: [userId], references: [id])
+  cart        Cart        @relation(fields: [cartId], references: [id])
+  orderStatus OrderStatus @default(OrderNotInitiated)
+  laundryName LaundryName
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            Int
+  type              String
+  provider          String
+  providerAccountId String  @unique
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       Int
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
